@@ -1,0 +1,10 @@
+_user_code_w5300.h:42:6:W5300_write	0	static
+_user_code_w5300.h:47:10:W5300_read	0	static
+_user_code_intit.h:3:5:_write	24	static
+_user_code_w5300.h:34:6:Reset_W5300	8	static
+_user_code_w5300.h:54:6:print_network_information	24	static
+_user_code_w5300.h:66:6:_InitW5300	8	static
+_user_code_intit.h:13:6:init_project	0	static
+main.c:120:6:SystemClock_Config	104	static,ignoring_inline_asm
+main.c:72:5:main	64	static,ignoring_inline_asm
+main.c:303:6:Error_Handler	0	static,ignoring_inline_asm
