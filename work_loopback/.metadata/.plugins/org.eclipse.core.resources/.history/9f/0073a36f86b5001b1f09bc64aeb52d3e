@@ -1,0 +1,206 @@
+#include "ov2640.h"
+
+
+#define _IMAGE_SIZE_X 640
+#define _IMAGE_SIZE_Y 480
+#define _UDP_TX_BUF_RATE	1
+
+
+
+
+#define _FRAME_BUF_SIZE	(_IMAGE_SIZE_X*2)
+
+
+//#define _FRAME_BUF_SIZE	(480 * 136)
+volatile uint16_t FrameBuffer[_FRAME_BUF_SIZE];	// 카메라에서 보내온 영상이 담길 프레임 버퍼
+uint16_t FrameBuffer2[_FRAME_BUF_SIZE];
+uint32_t RemaindImage1 = (uint32_t)FrameBuffer + (480 * 136) * 2; //  2번째 보낼 선두 위치. RGB565 2Byte이므로 곱하기 2
+uint32_t RemaindImage2 = (uint32_t)FrameBuffer + (480 * 136 * 2) * 2;	// 3번째 보낼 선두 위치
+uint32_t Remainder = 0;						// 3번 나누어 보내는 영상의 어느 부분인지 표시
+uint32_t CameraInit = 0;					// 카메라가 초기화 되었슴.
+volatile uint32_t gCameraFrameFlag = 0;		// 카메라에서 한 프레임을 보내 왔슴.
+volatile uint32_t gCameraLineFlag = 0;		// 카메라에서 한 프레임을 보내 왔슴.
+
+
+volatile uint32_t gLineCnt = 0;
+volatile uint32_t gDmaCnt = 0;
+ uint32_t gFrameCnt = 0;
+unsigned int gFrameRate = 0;
+
+static void TransferComplete(DMA_HandleTypeDef *hdma_memtomem_dma1_stream0);
+
+// 카메라에서 한 프레임이 모두 전송되었을 때 불려짐
+// 여기서 바로 LCD로의 DMA를 시작해도 되지만, 나중에 영상처리 등의 작업등을 생각해서 플래그만 세우고
+// 메인루프에서 처리하도록 하자.
+
+void HAL_DCMI_FrameEventCallback(DCMI_HandleTypeDef *hdcmi)
+{
+
+	//CamImagTransferLine(_CMD_CAM_FRAME, gCameraFrameFlag);
+	//GPIOF->ODR ^= BIT10;
+
+
+}
+
+// 카메라에서 VSYNC 이벤트가 발생했슴
+void HAL_DCMI_VsyncEventCallback(DCMI_HandleTypeDef *hdcmi)
+{
+	//프레임 전송시++
+	//GPIOD->ODR ^= BIT12;
+	gCameraFrameFlag++;
+	//sbi(GPIOD, BIT11);
+	//CamImagTransferFrame(_CMD_CAM_FRAME, gLineCnt);
+	//cbi(GPIOD, BIT11);
+
+
+	//CamImagTransferFrame(_CMD_CAM_FRAME, gFrameRate);
+
+		//printf(">%d\r\n", gCameraFrameFlag);
+	//gFrameCnt++;
+	//CamImagTransferLine(_CMD_CAM_FRAME, gFrameCnt);//gFrameRate);
+
+}
+
+// 카메라에서 한 라인이 들어왔슴
+void HAL_DCMI_LineEventCallback(DCMI_HandleTypeDef *hdcmi)
+{
+
+	gCameraLineFlag++;
+
+	//sbi(GPIOD, BIT12);
+	//CamImagTransferLine(_CMD_CAM_LINE, gLineCnt);
+	//cbi(GPIOD, BIT12);
+
+
+	//gLineCnt++;
+		//if(indx>3)indx=0;
+/*
+	  	data_buf[0] = _CMD_CAM_DATA;
+	  	data_buf[1] = 0;
+	  	data_buf[2] = gLineCnt>>8;
+	  	data_buf[3] = gLineCnt;
+
+		memcpy((uint8_t *)&data_buf[4], (uint8_t *)&FrameBuffer, _IMAGE_SIZE_X*2*_UDP_TX_BUF_RATE);
+
+	  	//memcpy((uint8_t *)&data_buf[4], (uint8_t *)&FrameBuffer2+, _UDP_TX_BUF_SIZE);
+
+		//sendto(3, data_buf, 1460 , gDestip, dDestport);
+		sendto(3, data_buf, 4+_IMAGE_SIZE_X*2*_UDP_TX_BUF_RATE , gDestip, dDestport);
+
+		//indx++;
+
+		//Remainder=1;
+
+*/
+	//if((gLineCnt%_UDP_TX_BUF_RATE)==0)
+		//
+
+
+
+}
+
+// 프레임 버퍼에서 DMA로 LCD로 전송이 완료되었슴.
+// 데이터 수가 480x320=153,600, 즉 64K를 넘으므로 3번에 나누어서 전송해야 함.
+// Remainder = 2 일 때가 첫번째 전송 완료이고, Remainder = 1 일 때가 두번째 전송 완료, Remainder = 0 이면 전송 끝.
+static void TransferComplete(DMA_HandleTypeDef *hdma_dcmi)
+{
+	//GPIOD->ODR ^= BIT11;
+}
+
+
+static void I2Cx_Write(uint8_t Addr, uint8_t Reg, uint8_t Value)
+{
+  HAL_StatusTypeDef status = HAL_OK;
+
+  status = HAL_I2C_Mem_Write(&hI2C_Cam, Addr, (uint16_t)Reg, I2C_MEMADD_SIZE_8BIT, &Value, 1, 100);
+
+  /* Check the communication status */
+  if(status != HAL_OK)
+  {
+    /* Execute user timeout callback */
+    //I2Cx_Error(Addr);
+  }
+}
+
+/**
+  * @brief  Reads a single data.
+  * @param  Addr: I2C address
+  * @param  Reg: Register address
+  * @retval Read data
+  */
+static uint8_t I2Cx_Read(uint8_t Addr, uint8_t Reg)
+{
+  HAL_StatusTypeDef status = HAL_OK;
+  uint8_t Value = 0;
+
+  status = HAL_I2C_Mem_Read(&hI2C_Cam, Addr, Reg, I2C_MEMADD_SIZE_8BIT, &Value, 1, 1000);
+
+  /* Check the communication status */
+  if(status != HAL_OK)
+  {
+    /* Execute user timeout callback */
+    //I2Cx_Error(Addr);
+  }
+  return Value;
+}
+
+/**
+  * @brief  Camera writes single data.
+  * @param  Addr: I2C address
+  * @param  Reg: Register address
+  * @param  Value: Data to be written
+  */
+void CAMERA_IO_Write(uint8_t Addr, uint8_t Reg, uint8_t Value)
+{
+  I2Cx_Write(Addr, Reg, Value);
+}
+
+/**
+  * @brief  Camera reads single data.
+  * @param  Addr: I2C address
+  * @param  Reg: Register address
+  * @retval Read data
+  */
+uint8_t CAMERA_IO_Read(uint8_t Addr, uint8_t Reg)
+{
+  return I2Cx_Read(Addr, Reg);
+}
+
+/**
+  * @brief  Camera delay
+  * @param  Delay: Delay in ms
+  */
+void CAMERA_Delay(uint32_t Delay)
+{
+  HAL_Delay(Delay);
+}
+
+void CAMERA_IO_Init(void)
+{
+	HAL_GPIO_WritePin(CAMERA_RESET_GPIO_Port, CAMERA_RESET_Pin, GPIO_PIN_SET);
+	HAL_Delay(10);
+	HAL_GPIO_WritePin(CAMERA_RESET_GPIO_Port, CAMERA_RESET_Pin, GPIO_PIN_RESET);
+	HAL_Delay(10);
+	HAL_GPIO_WritePin(CAMERA_RESET_GPIO_Port, CAMERA_RESET_Pin, GPIO_PIN_SET);
+	HAL_Delay(100);
+}
+
+void _init_cam(void)
+{
+	volatile uint32_t idc = ov2640_ReadID(CAMERA_I2C_ADDRESS);
+	//printf("id = %x\r\n", idc);
+
+	ov2640_Init(CAMERA_I2C_ADDRESS, CAMERA_R640x480);
+	
+	
+	CameraInit = 1;
+
+	// DMA로 이미지를 LCD에 전송할 때, 3개로 나눈 다음 부분을 보내기 위해 CPTL 콜백함수 등록
+	HAL_DMA_RegisterCallback(&hdma_dcmi, HAL_DMA_XFER_CPLT_CB_ID, TransferComplete);
+
+	// 디지칼 카메라 전송 시작. DCMI의 DMA Mode를 Circula로 하여 계속 이미지를 읽어오게 하였다.
+	//HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_CONTINUOUS, (uint32_t)(&FrameBuffer), (480 * 320) / 2);
+	//HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_CONTINUOUS, (uint32_t)(&FrameBuffer[0]), _FRAME_BUF_SIZE/2);
+	//HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_SNAPSHOT, (uint32_t)(&FrameBuffer), _FRAME_BUF_SIZE/2);
+
+}

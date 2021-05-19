@@ -1,0 +1,11 @@
+w5300.c:59:10:WIZCHIP_WRITE	0	static
+w5300.c:97:10:WIZCHIP_READ	0	static
+w5300.c:139:6:setTMSR	0	static
+w5300.c:148:9:getTMSR	0	static
+w5300.c:155:6:setRMSR	0	static
+w5300.c:164:9:getRMSR	0	static
+w5300.c:171:10:getSn_TX_FSR	8	static
+w5300.c:185:10:getSn_RX_RSR	12	static
+w5300.c:200:6:wiz_send_data	12	static
+w5300.c:209:6:wiz_recv_data	12	static
+w5300.c:228:6:wiz_recv_ignore	0	static

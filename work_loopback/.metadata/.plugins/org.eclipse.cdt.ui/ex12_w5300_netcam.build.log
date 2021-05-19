@@ -1,0 +1,10 @@
+21:05:31 **** Incremental Build of configuration Debug for project ex12_w5300_netcam ****
+make -j8 all 
+arm-none-eabi-size   ex12_w5300_netcam.elf 
+   text	   data	    bss	    dec	    hex	filename
+  24060	    216	   6664	  30940	   78dc	ex12_w5300_netcam.elf
+Finished building: default.size.stdout
+ 
+
+21:05:31 Build Finished. 0 errors, 0 warnings. (took 745ms)
+
